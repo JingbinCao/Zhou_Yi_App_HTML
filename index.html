@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>周易算卦</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<style>
+    .loading {
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #3498db;
+        border-radius: 50%;
+        width: 12px;
+        height: 12px;
+        animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+
+<body>
+    <div class="container">
+        <h1>周易算卦</h1>
+        <form id="yiForm">
+            <label for="method">选择算卦方法：</label>
+            <select id="method">
+                <option value="text">三变卦法（输入文字，需输入六次）</option>
+                <option value="number">大衍之数法（输入数字）</option>
+            </select>
+            <br>
+            <input type="text" id="userInput" placeholder="请输入文字或数字" required />
+            <button type="submit">算卦</button>
+            <span id="loadingText" style="display: none;">正在努力算卦中……请等待两秒钟</span>
+            <span id="loading" class="loading" style="display: none;"></span>
+        </form>
+        <div id="process"></div>
+        <div id="result"></div>
+    </div>
+    <script>
+        const guaNames = [
+        '乾为天', '坤为地', '水雷屯', '山水蒙', '水天需', '天水讼', '地水师', '水地比',
+            '风天小畜', '雷地豫', '泽雷随', '泽天大壮', '火地晋', '地火明夷', '地山谦', '火泽睽',
+            '泽山咸', '雷火丰', '地泽临', '风火家人', '泽天夬', '火山旅', '雷地观', '山火贲',
+            '山天大畜', '山泽损', '火雷噬嗑', '风泽中孚', '雷山小过', '风雷益', '巽为风', '兑为泽',
+            '火风鼎', '地雷复', '泽火革', '雷天大壮', '风地观', '山雷颐', '泽山损', '火地晋',
+            '雷水解', '山泽剥', '泽地涣', '火天大有', '天雷无妄', '山火同人', '山雷遁', '水泽节',
+            '雷风恒', '天火同人', '巽为风', '兑为泽'];
+
+        let inputCount = 0;
+        let upper = 0;
+        let lower = 0;
+
+        document.getElementById('yiForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const method = document.getElementById('method').value;
+            if (method === 'text') {
+                handleTextMethod();
+            } else {
+                handleNumberMethod();
+            }
+        });
+
+        function handleTextMethod() {
+            const userInput = document.getElementById('userInput').value;
+            const yinOrYang = userInput.charCodeAt(inputCount % userInput.length) % 2 === 0 ? 2 : 1;
+            if (inputCount < 3) {
+                lower += yinOrYang * Math.pow(2, inputCount);
+            } else if (inputCount < 5) {
+                upper += yinOrYang * Math.pow(2, inputCount - 3);
+            } else {
+                // 用户输入完成，显示随机卦名
+                upper += yinOrYang * Math.pow(2, inputCount - 3);
+                showLoadingAnimation();
+                setTimeout(() => {
+                    document.getElementById('userInput').disabled = true;
+                    const randomGuaIndex = Math.floor(Math.random() * guaNames.length);
+                    document.getElementById('result').innerHTML = '当前卦为：' + guaNames[randomGuaIndex];
+                    hideLoadingAnimation();
+                    inputCount = 0;
+                    upper = 0;
+                    lower = 0;
+                    return;
+                }, 2000);
+            }
+            displayLine(yinOrYang);
+            inputCount++;
+            document.getElementById('userInput').value = '';
+        }
+
+        function handleNumberMethod() {
+            const userNumber = parseInt(document.getElementById('userInput').value, 10);
+            const gua = computeGua(userNumber);
+            showLoadingAnimation();
+            setTimeout(() => {
+                if (guaNames[gua] === undefined) {
+                    document.getElementById('result').innerHTML = '当前卦为：未知卦，请重新算卦';
+                } else {
+                    document.getElementById('result').innerHTML = '当前卦为：' + guaNames[gua];
+                }
+                hideLoadingAnimation();
+            }, 2000);
+        }
+
+        function showLoadingAnimation() {
+            document.getElementById('loadingText').style.display = 'inline';
+            document.getElementById('loading').style.display = 'inline-block';
+        }
+
+        function hideLoadingAnimation() {
+            document.getElementById('loadingText').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+        }
+
+
+        function displayLine(yinOrYang) {
+            let processDiv = document.getElementById('process');
+            if (yinOrYang === 2) {
+                processDiv.innerHTML += '☰ (乾，阳爻)<br>';
+            } else {
+                processDiv.innerHTML += '☷ (坤，阴爻)<br>';
+            }
+        }
+
+        function computeGua(userNumber) {
+            const totalNumber = 50;
+            const usedNumber = 49;
+            const qian = ((userNumber * 4) % usedNumber) || usedNumber;
+            const kun = ((userNumber * 5) % usedNumber) || usedNumber;
+            const upper = (qian - 1) % 8;
+            const lower = (kun - 1) % 8;
+            displayProcess(userNumber, qian, kun, upper, lower);
+            return (upper * 8) + lower;
+        }
+
+        function displayProcess(userNumber, qian, kun, upper, lower) {
+            let processDiv = document.getElementById('process');
+            processDiv.innerHTML = `算卦过程：<br>
+                                     输入的数字：${userNumber}<br>
+                                     乾数：${qian}<br>
+                                     坤数：${kun}<br>
+                                     上卦：第${upper}卦<br>
+                                     下卦：第${lower}卦<br>`;
+        }
+    </script>
+</body>
