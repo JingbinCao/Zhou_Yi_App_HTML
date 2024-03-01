@@ -1,8 +1,3 @@
 # zhouyi 周易
 
-提供两种算卦方式：
-六次输入文字/数字
-或者
-输入一次数字
-
-系统需要两秒时间求签，请耐心等待，谢谢！
+Using HTML for lottering the ticket based on ZhouYi
